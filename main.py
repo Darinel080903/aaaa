@@ -1,9 +1,11 @@
 import re
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification, pipeline
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, Request
+from pydantic import BaseModel
+from typing import Dict
 
-app = Flask(__name__)
+app = FastAPI()
 
 model_name = "nlptown/bert-base-multilingual-uncased-sentiment"
 tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -15,17 +17,17 @@ groserias = ["puto", "puta", "pendejo", "pendeja", "idiota", "imbecil", "estupid
              "pendejada", "joto", "mampo", "mampa", "perra", "chinga", "maricon",
              "pendejote", "putazo", "mamon", "mamona"]
 
-def preprocess_text(text):
+def preprocess_text(text: str) -> str:
     text = text.lower()
     text = re.sub(r'\b\w{1,2}\b', '', text)
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-def convertir_calificacion(label):
+def convertir_calificacion(label: str) -> int:
     calificacion = int(label[0])
     return calificacion
 
-def asignar_etiqueta(score):
+def asignar_etiqueta(score: int) -> str:
     if score <= 2:
         return "Negativo"
     elif score == 3:
@@ -33,13 +35,13 @@ def asignar_etiqueta(score):
     else:
         return "Positivo"
 
-def contiene_groserias(text):
+def contiene_groserias(text: str) -> bool:
     for palabra in groserias:
         if palabra in text:
             return True
     return False
 
-def analizar_comentario(comentario):
+def analizar_comentario(comentario: str) -> Dict:
     comentario_procesado = preprocess_text(comentario)
     if contiene_groserias(comentario_procesado):
         return {
@@ -53,12 +55,11 @@ def analizar_comentario(comentario):
             "calificacion": calificacion,
         }
 
-@app.route('/analizar', methods=['POST'])
-def analizar():
-    data = request.json
-    comentario = data.get('comentario', '')
-    resultado = analizar_comentario(comentario)
-    return jsonify(resultado)
+class ComentarioRequest(BaseModel):
+    comentario: str
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.post("/analizar")
+async def analizar(request: ComentarioRequest):
+    comentario = request.comentario
+    resultado = analizar_comentario(comentario)
+    return resultado
