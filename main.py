@@ -63,3 +63,7 @@ async def analizar(request: ComentarioRequest):
     comentario = request.comentario
     resultado = analizar_comentario(comentario)
     return resultado
+
+@app.get("/health")
+def read_root():
+    return {"status": "UP"}
