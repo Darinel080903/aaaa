@@ -1,10 +1,5 @@
 pipeline{
     agent any
-    environment {
-        DOCKER_IMAGE = 'service-user3'
-        PORT_MAPPING = '8004:8004'
-        CONTAINER_NAME = 'service-user3-container'
-    }
 
     stages {
         stage('Stop Container and Remove') {
