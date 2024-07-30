@@ -8,8 +8,6 @@ services:
       - "8004:8004"
     volumes:
       - .:/app
-    env_file:
-      - .env
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8004/health" ]
